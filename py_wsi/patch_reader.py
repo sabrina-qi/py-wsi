@@ -115,7 +115,7 @@ def sample_and_store_patches(file_name,
         regions, region_labels = get_regions(xml_dir + file_name[:-4] + ".xml")
 
     if level >= tiles.level_count:
-        print("[py-wsi error]: requested level does not exist. Number of slide levels: " + str(tiles.level_count))
+        print("[py_wsi error]: requested level does not exist. Number of slide levels: " + str(tiles.level_count))
         return 0
     x_tiles, y_tiles = tiles.level_tiles[level]
 

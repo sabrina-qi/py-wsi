@@ -1,7 +1,7 @@
 '''
 
 Dataset class (adapted using class from by Hvass-Labs tutorials) customised for whole slide image patches, 
-and using py-wsi to load patches from LMDB.
+and using py_wsi to load patches from LMDB.
 
 Optionally performs basic augmentation of patches (8 total: rotations of 90 degrees * k, for k={1, 2, 3}
 and flips across the horizontal and vertical axes.)

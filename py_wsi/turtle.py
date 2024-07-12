@@ -1,6 +1,6 @@
 """
 
-Main py-wsi manager, Turtle, which keeps track of a collection of SVS images, and allows for
+Main py_wsi manager, Turtle, which keeps track of a collection of SVS images, and allows for
 patch sampling, storing, and accessing. 
 
 Author: @ysbecca
@@ -17,7 +17,7 @@ from os import listdir
 from os.path import isfile, join
 
 
-# py-wsi scripts.
+# py_wsi scripts.
 from .patch_reader import *
 from .store import *
 from .helpers import *
@@ -33,7 +33,7 @@ class Turtle(object):
     			 xml_dir=False,
     			 label_map={},
     			 ):
-        """ The py-wsi manager class for manipulating svs and patches. 
+        """ The py_wsi manager class for manipulating svs and patches.
             - storage_type  expecting 'lmdb', 'hdf5', disk'
             - file_dir      location of all the image files
             - db_location   path where images will be stored
@@ -42,7 +42,7 @@ class Turtle(object):
             - label_map     dictionary of labels and their integer labels expected in annotation files
         """
         if storage_type not in STORAGE_TYPES:
-            print("[py-wsi error]: storage type not recognised; expecting one of", STORAGE_TYPES)
+            print("[py_wsi error]: storage type not recognised; expecting one of", STORAGE_TYPES)
             return
 
         self.storage_type = storage_type
@@ -94,7 +94,7 @@ class Turtle(object):
                 tile_dim = patch_size - 2*overlap
             print("Setting patch size", patch_dim, "and tile size", tile_dim)
         else:
-            print("[py-wsi error]: set either tile size or patch size.")
+            print("[py_wsi error]: set either tile size or patch size.")
             return 0, [], []
 
         # Make sure WSI exists.
@@ -126,7 +126,7 @@ class Turtle(object):
 
         # Check that tile level requested is valid.
         if level > tiles.level_count - 1:
-            print("[py-wsi error]: requested level does not exist. Number of slide levels:", tiles.level_count)
+            print("[py_wsi error]: requested level does not exist. Number of slide levels:", tiles.level_count)
             return None
     
         # Sample from centre of image to maximise likelihood of returning tissue.
@@ -148,7 +148,7 @@ class Turtle(object):
         else:
             # Check for invalid inputs.
             if len(select) != self.num_files:
-                print("[py-wsi error]: select array provided but does not match the number of files,", self.num_files)
+                print("[py_wsi error]: select array provided but does not match the number of files,", self.num_files)
                 return []
 
         # Fetch all the patches from each selected image in dataset.
@@ -207,11 +207,11 @@ class Turtle(object):
         if load_xml:
             num_xml_files = len(self.get_xml_files())
             if self.num_files != num_xml_files:
-                print("[py-wsi error]: requested to read XML annotations but number of XML files", num_xml_files,
+                print("[py_wsi error]: requested to read XML annotations but number of XML files", num_xml_files,
                     "does not match number of .svs files", self.num_files)
                 return
         if overlap < 0:
-            print("[py-wsi error]: negative overlap not allowed.")
+            print("[py_wsi error]: negative overlap not allowed.")
             return
 
         xml_dir = False
@@ -271,10 +271,10 @@ class Turtle(object):
         """ Checks if a file is found in the file list.
         """
         if file_name not in self.files:
-            print("[py-wsi error]: file not found in directory", self.file_dir)
+            print("[py_wsi error]: file not found in directory", self.file_dir)
             return False
         if file_name[-4:] != ".svs":
-            print("[py-wsi error]: filename should end in .svs extension.")
+            print("[py_wsi error]: filename should end in .svs extension.")
             return False
         return True
 
@@ -309,7 +309,7 @@ class Turtle(object):
                     labels.append(l)
 
         if verbose:
-            print("[py-wsi] loaded from", file_name, ".h5 file", np.shape(patches))
+            print("[py_wsi] loaded from", file_name, ".h5 file", np.shape(patches))
 
         return patches, coords, classes, labels
 
@@ -336,7 +336,7 @@ class Turtle(object):
 
             # Don't stop if one image fails.
             if patch_count <= 0:
-                print("[py-wsi error]: no patches sampled from ", file, ". Continuing.")
+                print("[py_wsi error]: no patches sampled from ", file, ". Continuing.")
             total_count += patch_count
 
 
@@ -372,7 +372,7 @@ class Turtle(object):
                 # To be consistant with LMDB implementation.
                 classes.append(-1)
         if verbose:
-            print("[py-wsi] loaded", len(patches), "patches from", wsi_name)
+            print("[py_wsi] loaded", len(patches), "patches from", wsi_name)
 
         return patches, coords, classes, labels
 
@@ -399,7 +399,7 @@ class Turtle(object):
 
             # Don't stop if one image fails.
             if patch_count <= 0:
-                print("[py-wsi error]: no patches sampled from ", file, ". Continuing.")
+                print("[py_wsi error]: no patches sampled from ", file, ". Continuing.")
             total_count += patch_count
 
         print("")
@@ -439,7 +439,7 @@ class Turtle(object):
         if self.label_map != {}:
             labels = [i.get_label_array(len(self.label_map)) for i in items]
         else:
-            print("[py-wsi]: no labels found for these patches.")
+            print("[py_wsi]: no labels found for these patches.")
             labels = []
         return patches, coords, classes, labels
 
@@ -501,7 +501,7 @@ class Turtle(object):
 
             # Don't stop if one image fails.
             if patch_count <= 0:
-                print("[py-wsi error]: no patches sampled from ", file, ". Continuing.")
+                print("[py_wsi error]: no patches sampled from ", file, ". Continuing.")
 
         print("")
         print("====== LMDB " + self.db_name + " Stats ======")

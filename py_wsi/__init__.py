@@ -1,4 +1,4 @@
-# py-wsi scripts and functions.
+# py_wsi scripts and functions.
 from .turtle import *
 
 
