@@ -320,7 +320,7 @@ class Turtle(object):
         total_count = 0
         for file in self.files:
             print(file, end=" ")
-            patch_count = sample_and_store_patches(
+            patch_count = sample_and_store_patches(  # Note that this is from patch_reader.py
                                 file,
                                 self.file_dir,
                                 overlap,

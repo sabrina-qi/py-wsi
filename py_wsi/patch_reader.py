@@ -14,6 +14,8 @@ from xml.dom import minidom
 from shapely.geometry import Polygon, Point
 
 from .store import *
+from ...path_preprocess import bg_subtract
+
 
 def check_label_exists(label, label_map):
     ''' Checking if a label is a valid label. 
@@ -127,7 +129,7 @@ def sample_and_store_patches(file_name,
             new_tile = np.array(tiles.get_tile(level, (x, y)), dtype=np.uint8)
             # OpenSlide calculates overlap in such a way that sometimes depending on the dimensions, edge
             # patches are smaller than the others. We will ignore such patches.
-            if np.shape(new_tile) == (patch_size, patch_size, 3):
+            if np.shape(new_tile) == (patch_size, patch_size, 3) and is_background(new_tile) is False:
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
                 count += 1
@@ -165,3 +167,28 @@ def sample_and_store_patches(file_name,
         save_meta_in_lmdb(meta_env, file_name[:-4], [x_tiles, y_tiles])
 
     return count
+
+
+def is_background(tile, threshold=.15, bg_value=255):
+    """
+    Determines if the tile is majority background or not, returning a True if majority bg, False if majority tissue.
+
+    :param tile: Background-subtracted / previously thresholded tile
+    :type tile: Numpy array of RGB PIL. Image
+    :param threshold: The percent of pixels at which the tile is considered a 'background' tile. Should be 0 <= threshold <= 1
+    :type threshold: float
+    :param bg_value: The value for which that and any greater value up to 255 is considered 'background'. This can be set via background subtraction in a previous step.
+    :type bg_value: int
+    :return:
+    :rtype: numpy.bool_ (a Numpy array of Boolean values)
+    """
+    # Convert tile to numpy
+    tile_arr = np.array(tile)
+    # Binary msk for bg
+    bg_msk = tile_arr == bg_value
+    bg_count = np.sum(bg_msk)
+    if (bg_count / bg_msk.size) <= threshold:
+        bg_status = False
+    else:
+        bg_status = True
+    return bg_status
