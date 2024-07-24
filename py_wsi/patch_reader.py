@@ -111,13 +111,18 @@ def sample_and_store_patches(file_name,
         of tile_size. This implementation was chosen to allow for more intuitive usage.
     '''
 
-    tile_size = patch_to_tile_size(patch_size, pixel_overlap)
+    
     slide = open_slide(file_dir + file_name)
     # Get appropriate level for the magnification
     if level is None:
         level = get_level_for_magnification(slide, magnification)
         logging.info("Level was not specified, magnification of {} used to choose level {}.".format(magnification, level))
-    
+        df = get_downsample_factor(slide, magnification)
+        patch_size = np.ceil(df * patch_size)
+        if patch_size % 2 != 0:
+            patch_size = patch_size + 1
+
+    tile_size = patch_to_tile_size(patch_size, pixel_overlap)
     tiles = DeepZoomGenerator(slide,
                               tile_size=tile_size,
                               overlap=pixel_overlap,
