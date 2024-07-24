@@ -7,11 +7,15 @@ Author: @ysbecca
 '''
 
 import numpy as np
+import openslide
 from openslide import open_slide  
 from openslide.deepzoom import DeepZoomGenerator
 from glob import glob
 from xml.dom import minidom
 from shapely.geometry import Polygon, Point
+import logging
+from skimage.color import rgb2gray
+from skimage.filters import threshold_otsu
 
 from .store import *
 from ...path_preprocess import bg_subtract
@@ -82,7 +86,9 @@ def sample_and_store_patches(file_name,
                              env=False,
                              meta_env=False,
                              patch_size=512,
-                             level=0,
+                             level=None,
+                             magnification=20,
+                             ignore_bg_percent=None,
                              xml_dir=False,
                              label_map={},
                              limit_bounds=True,
@@ -107,6 +113,11 @@ def sample_and_store_patches(file_name,
 
     tile_size = patch_to_tile_size(patch_size, pixel_overlap)
     slide = open_slide(file_dir + file_name)
+    # Get appropriate level for the magnification
+    if level is None:
+        level = get_level_for_magnification(slide, magnification)
+        logging.info("Level was not specified, magnification of {} used to choose level {}.".format(magnification, level))
+    
     tiles = DeepZoomGenerator(slide,
                               tile_size=tile_size,
                               overlap=pixel_overlap,
@@ -127,9 +138,12 @@ def sample_and_store_patches(file_name,
     while y < y_tiles:
         while x < x_tiles:
             new_tile = np.array(tiles.get_tile(level, (x, y)), dtype=np.uint8)
+            # BG subtract here before adding to patch
+            if ignore_bg_percent:
+                new_tile = bg_subtract(new_tile, bg_val=255)
             # OpenSlide calculates overlap in such a way that sometimes depending on the dimensions, edge
             # patches are smaller than the others. We will ignore such patches.
-            if np.shape(new_tile) == (patch_size, patch_size, 3) and not is_background(new_tile):
+            if np.shape(new_tile) == (patch_size, patch_size, 3) and not is_background(new_tile, threshold=ignore_bg_percent):
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
                 count += 1
@@ -169,7 +183,26 @@ def sample_and_store_patches(file_name,
     return count
 
 
-def is_background(tile, threshold=.15, bg_value=255):
+def bg_subtract(image, bg_val=255):
+    """
+    Background subtract from the original WSI image
+
+    :param image: Original image array
+    :type image: numpy array, as returned from read_svs
+    :return: no_bg_image
+    :rtype: numpy array
+    """
+    # Convert RGB to gray
+    image_gray = rgb2gray(image)
+    # Otsu Threshold
+    thresh = threshold_otsu(image_gray)
+    msk_background = image_gray > thresh
+    # Select background pixels, set to 255 (white)
+    image[msk_background] = 255
+    return image
+
+
+def is_background(tile, threshold=.8, bg_value=255):
     """
     Determines if the tile is majority background or not, returning a True if majority bg, False if majority tissue.
 
@@ -185,10 +218,32 @@ def is_background(tile, threshold=.15, bg_value=255):
     # Convert tile to numpy
     tile_arr = np.array(tile)
     # Binary msk for bg
-    bg_msk = tile_arr == bg_value
-    bg_count = np.sum(bg_msk)
-    if (bg_count / bg_msk.size) <= threshold:
+    foreground_msk = tile_arr == bg_value
+    bg_count = np.sum(foreground_msk)
+    if (bg_count / foreground_msk.size) >= threshold:
         bg_status = False
     else:
         bg_status = True
     return bg_status
+
+
+def get_level_for_magnification(slide, desired_magnification):
+    ds_factor = get_downsample_factor(slide, desired_magnification)
+    true_level = slide.get_best_level_for_downsample(ds_factor)
+    return true_level
+
+
+def get_downsample_factor(slide, desired_magnification):
+    """
+    Get the downsample factor for the desired magnification.
+
+    :param slide:
+    :type slide:
+    :param desired_magnification:
+    :type desired_magnification:
+    :return:
+    :rtype:
+    """
+    objective_power = float(slide.properties[openslide.PROPERTY_NAME_OBJECTIVE_POWER])
+    downsample_factor = desired_magnification / objective_power
+    return downsample_factor
