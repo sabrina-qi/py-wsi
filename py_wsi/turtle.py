@@ -186,8 +186,10 @@ class Turtle(object):
 
     def sample_and_store_patches(self,
                                  patch_size,
-                                 level,
                                  overlap,
+                                 level=None,
+                                 mag=20,
+                                 ignore_bg_percent=None,
                                  load_xml=False,
                                  limit_bounds=True,
                                  rows_per_txn=20):
@@ -219,7 +221,7 @@ class Turtle(object):
             xml_dir = self.xml_dir
 
         if self.storage_type == 'hdf5':
-            self.__sample_store_hdf5(patch_size, level, overlap, xml_dir, limit_bounds, rows_per_txn)
+            self.__sample_store_hdf5(patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=level, magnification=mag, ignore_bg_percent=ignore_bg_percent)
         elif self.storage_type == 'disk':
             self.__sample_store_disk(patch_size, level, overlap, xml_dir, limit_bounds, rows_per_txn)
         else:
@@ -314,18 +316,20 @@ class Turtle(object):
         return patches, coords, classes, labels
 
 
-    def __sample_store_hdf5(self, patch_size, level, overlap, xml_dir, limit_bounds, rows_per_txn):
+    def __sample_store_hdf5(self, patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=None, magnification=20, ignore_bg_percent=None):
         """ Same parameters as sample_and_store_patches().
         """
         total_count = 0
         for file in self.files:
             print(file, end=" ")
-            patch_count = sample_and_store_patches(
+            patch_count = sample_and_store_patches(  # Note that this is from patch_reader.py
                                 file,
                                 self.file_dir,
                                 overlap,
                                 patch_size=patch_size,
                                 level=level,
+                                magnification=magnification,
+                                ignore_bg_percent=ignore_bg_percent,
                                 xml_dir=xml_dir,
                                 label_map=self.label_map,
                                 limit_bounds=limit_bounds,
