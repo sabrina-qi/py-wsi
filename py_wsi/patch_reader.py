@@ -18,7 +18,6 @@ from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 
 from .store import *
-from ...path_preprocess import bg_subtract
 
 
 def check_label_exists(label, label_map):
