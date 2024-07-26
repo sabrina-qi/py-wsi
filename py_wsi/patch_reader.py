@@ -147,7 +147,8 @@ def sample_and_store_patches(file_name,
                 new_tile = bg_subtract(new_tile, bg_val=255)
             # OpenSlide calculates overlap in such a way that sometimes depending on the dimensions, edge
             # patches are smaller than the others. We will ignore such patches.
-            if np.shape(new_tile) == (patch_size, patch_size, 3) and not is_background(new_tile, threshold=ignore_bg_percent):
+            is_bg = is_background(new_tile, threshold=ignore_bg_percent)
+            if np.shape(new_tile) == (patch_size, patch_size, 3) and not is_bg:
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
                 count += 1
