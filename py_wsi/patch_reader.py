@@ -14,7 +14,7 @@ from glob import glob
 from xml.dom import minidom
 from shapely.geometry import Polygon, Point
 import logging
-from skimage.color import rgb2gray
+from skimage.color import rgb2gray, rgb2hed
 from skimage.filters import threshold_otsu
 
 from .store import *
@@ -88,6 +88,7 @@ def sample_and_store_patches(file_name,
                              level=None,
                              magnification=20,
                              ignore_bg_percent=None,
+                             color_deconv=False,
                              xml_dir=False,
                              label_map={},
                              limit_bounds=True,
@@ -143,12 +144,21 @@ def sample_and_store_patches(file_name,
         while x < x_tiles:
             new_tile = np.array(tiles.get_tile(level, (x, y)), dtype=np.uint8)
             # BG subtract here before adding to patch
+            is_fg = True
             if ignore_bg_percent:
                 new_tile = bg_subtract(new_tile, bg_val=255)
+                is_fg = is_foreground(new_tile, threshold=ignore_bg_percent)
+
             # OpenSlide calculates overlap in such a way that sometimes depending on the dimensions, edge
             # patches are smaller than the others. We will ignore such patches.
-            is_bg = is_background(new_tile, threshold=ignore_bg_percent)
-            if np.shape(new_tile) == (patch_size, patch_size, 3) and not is_bg:
+            
+            if np.shape(new_tile) == (patch_size, patch_size, 3):
+                # skip mostly bg patches (>.25)
+                if ignore_bg_percent and not is_fg:
+                    continue
+                # Color deconv
+                if color_deconv:
+                    new_tile = rgb2hed(new_tile)
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
                 count += 1
@@ -207,7 +217,7 @@ def bg_subtract(image, bg_val=255):
     return image
 
 
-def is_background(tile, threshold=.8, bg_value=255):
+def is_foreground(tile, threshold=.25, bg_value=255):
     """
     Determines if the tile is majority background or not, returning a True if majority bg, False if majority tissue.
 
@@ -223,13 +233,13 @@ def is_background(tile, threshold=.8, bg_value=255):
     # Convert tile to numpy
     tile_arr = np.array(tile)
     # Binary msk for bg
-    foreground_msk = tile_arr == bg_value
-    bg_count = np.sum(foreground_msk)
-    if (bg_count / foreground_msk.size) >= threshold:
-        bg_status = False
+    background_msk = tile_arr == bg_value
+    bg_count = np.sum(background_msk)
+    if (bg_count / background_msk.size) >= threshold:
+        fg_status = False
     else:
-        bg_status = True
-    return bg_status
+        fg_status = True
+    return fg_status
 
 
 def get_level_for_magnification(slide, desired_magnification):

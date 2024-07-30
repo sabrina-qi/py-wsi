@@ -190,6 +190,7 @@ class Turtle(object):
                                  level=None,
                                  mag=20,
                                  ignore_bg_percent=None,
+                                 color_deconv=False,
                                  load_xml=False,
                                  limit_bounds=True,
                                  rows_per_txn=20):
@@ -221,7 +222,7 @@ class Turtle(object):
             xml_dir = self.xml_dir
 
         if self.storage_type == 'hdf5':
-            self.__sample_store_hdf5(patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=level, magnification=mag, ignore_bg_percent=ignore_bg_percent)
+            self.__sample_store_hdf5(patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=level, magnification=mag, ignore_bg_percent=ignore_bg_percent, color_deconv=color_deconv)
         elif self.storage_type == 'disk':
             self.__sample_store_disk(patch_size, level, overlap, xml_dir, limit_bounds, rows_per_txn)
         else:
@@ -316,7 +317,7 @@ class Turtle(object):
         return patches, coords, classes, labels
 
 
-    def __sample_store_hdf5(self, patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=None, magnification=20, ignore_bg_percent=None):
+    def __sample_store_hdf5(self, patch_size, overlap, xml_dir, limit_bounds, rows_per_txn, level=None, magnification=20, ignore_bg_percent=None, color_deconv=False):
         """ Same parameters as sample_and_store_patches().
         """
         total_count = 0
@@ -330,6 +331,7 @@ class Turtle(object):
                                 level=level,
                                 magnification=magnification,
                                 ignore_bg_percent=ignore_bg_percent,
+                                color_deconv=color_deconv,
                                 xml_dir=xml_dir,
                                 label_map=self.label_map,
                                 limit_bounds=limit_bounds,
