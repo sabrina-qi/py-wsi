@@ -189,7 +189,7 @@ def sample_and_store_patches(file_name,
 
     # Write to HDF5 files all in one go.
     if storage_option == 'hdf5':
-        save_to_hdf5(db_location, patches, coords, file_name[:-4], labels)
+        save_to_hdf5(db_location, prefix, patches, coords, file_name[:-4], labels)
 
     # Need to save tile dimensions if LMDB for retrieving patches by key.
     if storage_option == 'lmdb':
