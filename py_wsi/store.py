@@ -74,7 +74,7 @@ def read_lmdb(location, name):
 #                Option 2: store to HDF5 files                            #
 ###########################################################################
 
-def save_to_hdf5(db_location, patches, coords, file_name, labels):
+def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
     """ Saves the numpy arrays to HDF5 files. All patches from a single WSI will be saved
         to the same HDF5 file, regardless of the transaction size specified by rows_per_txn,
         because this is the most efficient way to use HDF5 datasets.
@@ -86,7 +86,7 @@ def save_to_hdf5(db_location, patches, coords, file_name, labels):
     """
 
     # Save patches into hdf5 file.
-    file    = h5py.File(db_location + file_name + '.h5','w')
+    file    = h5py.File(db_location + prefix + '_' + file_name + '.h5','w')
     dataset = file.create_dataset('t', np.shape(patches), h5py.h5t.STD_I32BE, data=patches)
 
     # Save all label meta into a csv file.
