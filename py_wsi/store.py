@@ -7,6 +7,7 @@ Author: @ysbecca
 
 '''
 import csv
+import os
 import time
 import h5py
 from datetime import timedelta
@@ -86,11 +87,13 @@ def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
     """
 
     # Save patches into hdf5 file.
-    file    = h5py.File(db_location + prefix + '_' + file_name + '.h5','w')
+    fp = os.path.join(db_location, prefix + '_' + file_name + '.h5')
+    file    = h5py.File(fp,'w')
     dataset = file.create_dataset('t', np.shape(patches), h5py.h5t.STD_I32BE, data=patches)
 
     # Save all label meta into a csv file.
-    with open(db_location + file_name + '.csv', 'w', newline='') as csvfile:
+    fp_meta = os.path.join(db_location, file_name + '.csv')
+    with open(fp_meta, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
         for i in range(len(labels)):
