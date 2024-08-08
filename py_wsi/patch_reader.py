@@ -17,6 +17,7 @@ import logging
 from skimage.color import rgb2gray, rgb2hed
 from skimage.filters import threshold_otsu
 import math
+import tifffile as tiff
 
 from .store import *
 
@@ -86,7 +87,7 @@ def sample_and_store_patches(file_name,
                              env=False,
                              meta_env=False,
                              patch_size=512,
-                             level=None,
+                             dz_level=None,
                              magnification=20,
                              ignore_bg_percent=None,
                              color_deconv=False,
@@ -113,9 +114,10 @@ def sample_and_store_patches(file_name,
     '''
 
     filepath = os.path.join(file_dir, file_name)
+    logging.info(f"-------------- | Tiling {filepath} | --------------")
     slide = open_slide(filepath)
     # Get appropriate level for the magnification
-    if level is None:
+    if dz_level is None:
         # level = get_level_for_magnification(slide, magnification)
         # logging.info("Level was not specified, magnification of {} used to choose level {}.".format(magnification, level))
         desired_downsample = get_downsample_factor(slide, magnification)
@@ -127,8 +129,8 @@ def sample_and_store_patches(file_name,
         # pixel_overlap = int(np.ceil(pixel_overlap / df))
          # Get the approp level in DeepZoomGenerator world, using desired slide level
         # Calculate the corresponding Deep Zoom level
-        level = round(math.log2(desired_downsample))
-        logging.info(f"This is desired level {level}")
+        dz_level = round(math.log2(desired_downsample))
+        logging.info(f"This is desired dz level {dz_level}")
 
     tile_size = patch_to_tile_size(patch_size, pixel_overlap)
     logging.info(f"Tile size {tile_size} given patch size {patch_size} and pixel overlap {pixel_overlap}")
@@ -142,12 +144,13 @@ def sample_and_store_patches(file_name,
         # Expect filename of XML annotations to match SVS file name
         regions, region_labels = get_regions(xml_dir + file_name[:-4] + ".xml")
 
-    if level >= tiles.level_count:
+    if dz_level >= tiles.level_count:
         print("[py_wsi error]: requested level does not exist. Number of slide levels: " + str(tiles.level_count))
         return 0
 
     # Account for the reversed order in Deep Zoom level world
-    dz_level = tiles.level_count - 1 - level
+    dz_level = tiles.level_count - 1 - dz_level
+    
     logging.info(f"this is dz_level {dz_level}")
     x_tiles, y_tiles = tiles.level_tiles[dz_level]
     logging.info(f"This is level_tiles {tiles.level_tiles}")
@@ -163,7 +166,7 @@ def sample_and_store_patches(file_name,
             # BG subtract here before adding to patch
             is_fg = True
             if ignore_bg_percent:
-                new_tile = bg_subtract(new_tile, bg_val=255)
+                # new_tile = bg_subtract(new_tile, bg_val=255)
                 is_fg = is_foreground(new_tile, threshold=ignore_bg_percent)
                 logging.info(f"Foreground? {is_fg}")
 
@@ -173,20 +176,28 @@ def sample_and_store_patches(file_name,
                 # skip mostly bg patches
                 if ignore_bg_percent and not is_fg:
                     x += 1
+                    logging.info(f"New patch is > {ignore_bg_percent * 100}% background, SAVE = FALSE.")
                     continue
                 # Color deconv
+                patch_path = os.path.join(db_location, prefix + "_"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                tiff.imwrite(patch_path, new_tile)
+                
                 if color_deconv:
                     new_tile = rgb2hed(new_tile)
+
+                patch_path = os.path.join(db_location, prefix + "_" + "deconv"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                tiff.imwrite(patch_path, new_tile)
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
+                logging.info(f"SAVE = TRUE")
                 count += 1
 
                 # Calculate the patch label based on centre point.
                 if xml_dir:
-                    converted_coords = tiles.get_tile_coordinates(level, (x, y))[0]
+                    converted_coords = tiles.get_tile_coordinates(dz_level, (x, y))[0]
                     labels.append(generate_label(regions, region_labels, converted_coords, label_map))
             else:
-                logging.info(f"New patch shape is {np.shape(new_tile)}, ignoring because edge patch does not match desired patch size")
+                logging.info(f"New patch shape is {np.shape(new_tile)}, SAVE = FALSE")
             x += 1
 
         # To save memory, we will save data into the dbs every rows_per_txn rows. i.e., each transaction will commit
@@ -237,7 +248,7 @@ def bg_subtract(image, bg_val=255):
     return image
 
 
-def is_foreground(tile, threshold=.5, bg_value=255):
+def is_foreground(tile, threshold=.5, std_threshold = .05):
     """
     Determines if the tile is majority background or not, returning a True if majority bg, False if majority tissue.
 
@@ -252,8 +263,15 @@ def is_foreground(tile, threshold=.5, bg_value=255):
     """
     # Convert tile to numpy
     tile_arr = np.array(tile)
-    # Binary msk for bg
-    background_msk = tile_arr == bg_value
+    # Convert RGB to gray
+    image_gray = rgb2gray(tile_arr)
+    # Get rid of empty patches
+    if np.std(image_gray) < std_threshold:
+        return False
+    # Otsu Threshold
+    otsu_thresh = threshold_otsu(image_gray)
+    background_msk = image_gray > otsu_thresh
+
     bg_count = np.sum(background_msk)
     if (bg_count / background_msk.size) >= threshold:
         fg_status = False

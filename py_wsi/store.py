@@ -92,7 +92,7 @@ def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
     dataset = file.create_dataset('t', np.shape(patches), h5py.h5t.STD_I32BE, data=patches)
 
     # Save all label meta into a csv file.
-    fp_meta = os.path.join(db_location, file_name + '.csv')
+    fp_meta = os.path.join(db_location, prefix + '_' + file_name + '.csv')
     with open(fp_meta, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)

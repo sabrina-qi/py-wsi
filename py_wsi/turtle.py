@@ -291,7 +291,7 @@ class Turtle(object):
         patches, coords, classes, labels = [], [], [], []
         
         # Now load the images from H5 file.
-        file = h5py.File(self.db_location + file_name + ".h5",'r+')
+        file = h5py.File(os.path.join(self.db_location, self.db_name + "_" + file_name + ".h5",'r+'))
         dataset = file['/' + 't']
         new_patches = np.array(dataset).astype('uint8')
         for patch in new_patches:
@@ -299,7 +299,7 @@ class Turtle(object):
         file.close()
 
         # Load the corresponding meta.
-        with open(self.db_location + file_name + ".csv", newline='') as metafile:
+        with open(os.path.join(self.db_location, self.db_name + "_" + file_name + ".csv", newline='')) as metafile:
             reader = csv.reader(metafile, delimiter=' ', quotechar='|')
             for row in reader:
                 coords.append([int(row[0]), int(row[1])])
@@ -328,7 +328,7 @@ class Turtle(object):
                                 self.file_dir,
                                 overlap,
                                 patch_size=patch_size,
-                                level=level,
+                                dz_level=level,
                                 magnification=magnification,
                                 ignore_bg_percent=ignore_bg_percent,
                                 color_deconv=color_deconv,
