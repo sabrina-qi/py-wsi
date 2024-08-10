@@ -181,7 +181,7 @@ def sample_and_store_patches(file_name,
                     continue
 
                 # Save tiff of RGB
-                patch_path = os.path.join(db_location, prefix + "_" + +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                patch_path = os.path.join(db_location, prefix + "_RGB_" + file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                 tiff.imwrite(patch_path, new_tile)
                 patches_RGB.append[new_tile]
 
@@ -195,7 +195,7 @@ def sample_and_store_patches(file_name,
                         new_tile_norm[:, :, i] = exposure.rescale_intensity(new_tile_norm[:, :, i], out_range=(0, 255))
                     # Convert to uint8
                     new_tile = new_tile_norm.astype(np.uint8)
-                    patch_path = os.path.join(db_location, prefix + "_" + "deconv"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                    patch_path = os.path.join(db_location, prefix + "_deconv_" +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                     tiff.imwrite(patch_path, new_tile)
                     patches_deconv.append(new_tile)
                 coords.append(np.array([x, y]))
