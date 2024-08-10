@@ -159,7 +159,7 @@ def sample_and_store_patches(file_name,
 
     x, y = 0, 0
     count, batch_count = 0, 0
-    patches, coords, labels = [], [], []
+    patches_deconv, patches_RGB, coords, labels = [], [], [], []
     while y < y_tiles:
         while x < x_tiles:
             logging.info(f"x: {x}, y: {y}")
@@ -183,6 +183,7 @@ def sample_and_store_patches(file_name,
                 # Save tiff of RGB
                 patch_path = os.path.join(db_location, prefix + "_" + +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                 tiff.imwrite(patch_path, new_tile)
+                patches_RGB.append[new_tile]
 
                 # Color deconv
                 if color_deconv:
@@ -196,7 +197,7 @@ def sample_and_store_patches(file_name,
                     new_tile = new_tile_norm.astype(np.uint8)
                     patch_path = os.path.join(db_location, prefix + "_" + "deconv"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                     tiff.imwrite(patch_path, new_tile)
-                patches.append(new_tile)
+                    patches_deconv.append(new_tile)
                 coords.append(np.array([x, y]))
                 logging.info(f"SAVE = TRUE")
                 count += 1
@@ -219,17 +220,20 @@ def sample_and_store_patches(file_name,
                 # LMDB by default.
                 save_in_lmdb(env, patches, coords, file_name[:-4], labels)
             if storage_option != 'hdf5':
+                del patches_RGB
                 del patches
                 del coords
                 del labels
-                patches, coords, labels = [], [], [] # Reset right away.
+                patches, patches_RGB, coords, labels = [], [], [] # Reset right away.
 
         y += 1
         x = 0
 
     # Write to HDF5 files all in one go.
     if storage_option == 'hdf5':
-        save_to_hdf5(db_location, prefix, patches, coords, file_name[:-4], labels)
+        if color_deconv:
+            save_to_hdf5(db_location, prefix + "_HED", patches_deconv, coords, file_name[:-4], labels)
+        save_to_hdf5(db_location, prefix + "_RGB", patches_RGB, coords, file_name[:-4], labels)
 
     # Need to save tile dimensions if LMDB for retrieving patches by key.
     if storage_option == 'lmdb':
