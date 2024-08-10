@@ -97,10 +97,9 @@ def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
         writer = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
         if len(labels) == 0:
-            writer.writerow([coords[i][0], coords[i][1], -1])
-        else:
-            for i in range(len(labels)):
-                writer.writerow([coords[i][0], coords[i][1], labels[i]])
+            writer.writerow([coords[i][0], coords[i][1], -1])  # give label -1 if no label in order to still save coords
+        for i in range(len(labels)):
+            writer.writerow([coords[i][0], coords[i][1], labels[i]])
 
 
 ###########################################################################
