@@ -18,6 +18,7 @@ from skimage.color import rgb2gray, rgb2hed
 from skimage.filters import threshold_otsu
 import math
 import tifffile as tiff
+from skimage import exposure
 
 from .store import *
 
@@ -166,27 +167,35 @@ def sample_and_store_patches(file_name,
             # BG subtract here before adding to patch
             is_fg = True
             if ignore_bg_percent:
-                # new_tile = bg_subtract(new_tile, bg_val=255)
                 is_fg = is_foreground(new_tile, threshold=ignore_bg_percent)
                 logging.info(f"Foreground? {is_fg}")
 
             # OpenSlide calculates overlap in such a way that sometimes depending on the dimensions, edge
             # patches are smaller than the others. We will ignore such patches.
             if np.shape(new_tile) == (patch_size, patch_size, 3):
+
                 # skip mostly bg patches
                 if ignore_bg_percent and not is_fg:
                     x += 1
                     logging.info(f"New patch is > {ignore_bg_percent * 100}% background, SAVE = FALSE.")
                     continue
-                # Color deconv
-                patch_path = os.path.join(db_location, prefix + "_"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+
+                # Save tiff of RGB
+                patch_path = os.path.join(db_location, prefix + "_" + +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                 tiff.imwrite(patch_path, new_tile)
-                
+
+                # Color deconv
                 if color_deconv:
                     new_tile = rgb2hed(new_tile)
-
-                patch_path = os.path.join(db_location, prefix + "_" + "deconv"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
-                tiff.imwrite(patch_path, new_tile)
+                    # Rescale each channel of the HED image
+                    new_tile_norm = np.zeros_like(new_tile)
+                    for i in range(new_tile_norm.shape[-1]):
+                        # Rescale the channel to range [0, 255]
+                        new_tile_norm[:, :, i] = exposure.rescale_intensity(new_tile_norm[:, :, i], out_range=(0, 255))
+                    # Convert to uint8
+                    new_tile = new_tile_norm.astype(np.uint8)
+                    patch_path = os.path.join(db_location, prefix + "_" + "deconv"+file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                    tiff.imwrite(patch_path, new_tile)
                 patches.append(new_tile)
                 coords.append(np.array([x, y]))
                 logging.info(f"SAVE = TRUE")
