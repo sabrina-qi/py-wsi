@@ -188,11 +188,13 @@ def sample_and_store_patches(file_name,
                 # Color deconv
                 if color_deconv:
                     new_tile = rgb2hed(new_tile)
+                    # new_tile = np.log1p(new_tile) # log transform
+                    logging.info(f"min {np.min(new_tile)}, max {np.max(new_tile)}")
                     # Rescale each channel of the HED image
                     new_tile_norm = np.zeros_like(new_tile)
                     for i in range(new_tile_norm.shape[-1]):
                         # Rescale the channel to range [0, 255]
-                        new_tile_norm[:, :, i] = exposure.rescale_intensity(new_tile_norm[:, :, i], out_range=(0, 255))
+                        new_tile_norm[:, :, i] = exposure.rescale_intensity(new_tile_norm[:, :, i], in_range=(np.min(new_tile), np.max(new_tile)), out_range=(0, 255))
                     # Convert to uint8
                     new_tile = new_tile_norm.astype(np.uint8)
                     patch_path = os.path.join(db_location, prefix + "_HED_" +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
@@ -231,9 +233,11 @@ def sample_and_store_patches(file_name,
 
     # Write to HDF5 files all in one go.
     if storage_option == 'hdf5':
+        save_to_hdf5(db_location, prefix + "_RGB", patches_RGB, coords, file_name[:-4], labels)
         if color_deconv:
             save_to_hdf5(db_location, prefix + "_HED", patches_deconv, coords, file_name[:-4], labels)
-        save_to_hdf5(db_location, prefix + "_RGB", patches_RGB, coords, file_name[:-4], labels)
+        
+        
 
     # Need to save tile dimensions if LMDB for retrieving patches by key.
     if storage_option == 'lmdb':

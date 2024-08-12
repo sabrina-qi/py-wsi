@@ -323,7 +323,6 @@ class Turtle(object):
         total_count = 0
         for file in self.files:
             print(file, end=" ")
-            logging.info(f"All files: {self.files}")
             logging.info(f"Sample and storing {file}")
             patch_count = sample_and_store_patches(  # Note that this is from patch_reader.py
                                 file,
@@ -346,7 +345,6 @@ class Turtle(object):
             if patch_count <= 0:
                 print("[py_wsi error]: no patches sampled from ", file, ". Continuing.")
             total_count += patch_count
-
 
     ###########################################################################
     #                Disk-specific helper functions                           #
