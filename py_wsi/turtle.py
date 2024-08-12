@@ -26,13 +26,13 @@ from .config import *
 class Turtle(object):
 
     def __init__(self,
-    			 file_dir,
-    			 db_location,
-    			 db_name="",
-    			 storage_type='lmdb',
-    			 xml_dir=False,
-    			 label_map={},
-    			 ):
+                         file_dir,
+                         db_location,
+                         db_name="",
+                         storage_type='lmdb',
+                         xml_dir=False,
+                         label_map={},
+                         ):
         """ The py_wsi manager class for manipulating svs and patches.
             - storage_type  expecting 'lmdb', 'hdf5', disk'
             - file_dir      location of all the image files
@@ -323,6 +323,7 @@ class Turtle(object):
         total_count = 0
         for file in self.files:
             print(file, end=" ")
+            logging.info(f"All files: {self.files}")
             logging.info(f"Sample and storing {file}")
             patch_count = sample_and_store_patches(  # Note that this is from patch_reader.py
                                 file,
