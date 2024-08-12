@@ -183,7 +183,7 @@ def sample_and_store_patches(file_name,
                 # Save tiff of RGB
                 patch_path = os.path.join(db_location, prefix + "_RGB_" + file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                 tiff.imwrite(patch_path, new_tile)
-                patches_RGB.append[new_tile]
+                patches_RGB.append(new_tile)
 
                 # Color deconv
                 if color_deconv:
@@ -195,11 +195,11 @@ def sample_and_store_patches(file_name,
                         new_tile_norm[:, :, i] = exposure.rescale_intensity(new_tile_norm[:, :, i], out_range=(0, 255))
                     # Convert to uint8
                     new_tile = new_tile_norm.astype(np.uint8)
-                    patch_path = os.path.join(db_location, prefix + "_deconv_" +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
+                    patch_path = os.path.join(db_location, prefix + "_HED_" +file_name[:-4] + "_X" + str(x) + "_Y" + str(y) + ".tiff")
                     tiff.imwrite(patch_path, new_tile)
                     patches_deconv.append(new_tile)
                 coords.append(np.array([x, y]))
-                logging.info(f"SAVE = TRUE")
+                logging.info(f"New patch shape is {np.shape(new_tile)}, SAVE = TRUE")
                 count += 1
 
                 # Calculate the patch label based on centre point.
@@ -207,7 +207,7 @@ def sample_and_store_patches(file_name,
                     converted_coords = tiles.get_tile_coordinates(dz_level, (x, y))[0]
                     labels.append(generate_label(regions, region_labels, converted_coords, label_map))
             else:
-                logging.info(f"New patch shape is {np.shape(new_tile)}, SAVE = FALSE")
+                logging.info(f"SAVE = FALSE")
             x += 1
 
         # To save memory, we will save data into the dbs every rows_per_txn rows. i.e., each transaction will commit
@@ -224,7 +224,7 @@ def sample_and_store_patches(file_name,
                 del patches
                 del coords
                 del labels
-                patches, patches_RGB, coords, labels = [], [], [] # Reset right away.
+                patches, patches_RGB, coords, labels = [], [], [], [] # Reset right away.
 
         y += 1
         x = 0
