@@ -285,13 +285,15 @@ class Turtle(object):
     #                HDF5-specific helper functions                           #
     ###########################################################################
 
-    def __get_patches_from_hdf5(self, file_name, verbose=False):
+    def __get_patches_from_hdf5(self, file_name, color_deconv_str='', verbose=False):
         """ Loads the numpy patches from HDF5 files.
         """
         patches, coords, classes, labels = [], [], [], []
+        if color_deconv_str:
+            color_deconv_str = color_deconv_str + "_"
         
         # Now load the images from H5 file.
-        file = h5py.File(os.path.join(self.db_location, self.db_name + "_" + file_name + ".h5",'r+'))
+        file = h5py.File(os.path.join(self.db_location, self.db_name + "_" + color_deconv_str + file_name + ".h5",'r+'))
         dataset = file['/' + 't']
         new_patches = np.array(dataset).astype('uint8')
         for patch in new_patches:
