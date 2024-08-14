@@ -17,6 +17,7 @@ from PIL import Image
 import lmdb
 import numpy as np
 from .item import *
+import logging
 
 
 ###########################################################################
@@ -97,9 +98,12 @@ def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
         writer = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
         if len(labels) == 0:
-            writer.writerow([coords[i][0], coords[i][1], -1])  # give label -1 if no label in order to still save coords
-        for i in range(len(labels)):
-            writer.writerow([coords[i][0], coords[i][1], labels[i]])
+            for j in range(len(coords)):
+                logging.info("Writing coords to csv")
+                writer.writerow([coords[j][0], coords[j][1], -1])  # give label -1 if no label in order to still save coords
+        else:
+            for i in range(len(labels)):
+                writer.writerow([coords[i][0], coords[i][1], labels[i]])
 
 
 ###########################################################################
