@@ -114,9 +114,9 @@ def sample_and_store_patches(file_name,
         of tile_size. This implementation was chosen to allow for more intuitive usage.
     '''
 
-    fpRGB = os.path.join(db_location, prefix + "_RGB_" + file_name + '.h5')
-    fpHED = os.path.join(db_location, prefix + "_HED_" + file_name + '.h5')
-    logging.info(fpRGB)
+    fpRGB = os.path.join(db_location, prefix + "_RGB_" + file_name[:-4] + '.h5')
+    fpHED = os.path.join(db_location, prefix + "_HED_" + file_name[:-4] + '.h5')
+    print(fpRGB)
     if os.path.exists(fpRGB) and os.path.exists(fpHED):
         logging.info(f"{fpRGB} and {fpHED} exists, moving to next")
         return 0

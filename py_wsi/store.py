@@ -90,7 +90,7 @@ def save_to_hdf5(db_location, prefix, patches, coords, file_name, labels):
     # Save patches into hdf5 file.
     fp = os.path.join(db_location, prefix + '_' + file_name + '.h5')
     file    = h5py.File(fp,'w')
-    dataset = file.create_dataset('t', np.shape(patches), h5py.h5t.STD_I32BE, data=patches)
+    dataset = file.create_dataset('t', np.shape(patches), h5py.h5t.STD_I32BE, data=patches, compression='gzip', chunks=True)
 
     # Save all label meta into a csv file.
     fp_meta = os.path.join(db_location, prefix + '_' + file_name + '.csv')
